@@ -65,6 +65,9 @@ jobs:
         # Runs project checks (linting, type-checking, etc.)
         run: npm run check
 
+      - name: Setup test environment
+        run: cp .env.test.example .env.test
+
       - name: Unit tests project
       #   # Run units tests
         run: npm run test:unit
