@@ -6,59 +6,58 @@ participant "React Frontend" as Front
 participant "Express API" as API
 database "PostgreSQL" as DB
 
-Utilisateur -> Front : Remplit le formulaire projet
+Utilisateur -> Front : Remplit le formulaire projet\n(nom, type, budget optionnel, participants optionnels)
 activate Front
 
-Front -> API : POST /projects
+Front -> API : POST /api/projects\n{ name, type, description?,\n  budget?: { amount, alertEnabled, limitCriteria },\n  participants?: [{ name, isMe? }] }
 activate API
 
-alt Utilisateur non authentifié
-
-    API --> Front : 401 Accès refusé
-
-    Front --> Utilisateur : Accès refusé
-
+alt Token JWT absent ou invalide
+    API --> Front : 401 Non authentifié
+    Front --> Utilisateur : Redirigé vers /login
 else Utilisateur authentifié
 
-    API -> API : Vérifier données
-    activate API
+    API -> API : Zod parse() — validation du body
 
     alt Données invalides
-
-        API --> Front : 400 Formulaire invalide
-
-        Front --> Utilisateur : Formulaire invalide
-
+        API --> Front : 400 Données invalides
+        Front --> Utilisateur : Erreurs affichées dans le formulaire
     else Données valides
 
-        API -> DB : INSERT projet
+        API -> DB : BEGIN TRANSACTION
         activate DB
 
-        alt Erreur base de données
+        API -> DB : INSERT project (name, type, description, appUserId)
+        DB --> API : project.id
 
-            DB --> API : Échec insertion
+        alt Budget fourni
+            API -> DB : INSERT budget (amount, limitCriteria, projectId)\nnote: si alertEnabled=false → limitCriteria=100
+            DB --> API : budget créé
+        end
 
-            API --> Front : 500 Création impossible
+        alt Participants fournis
+            loop Pour chaque participant
+                API -> DB : INSERT participant (name, appUserId si isMe=true)
+                DB --> API : participant.id
+                API -> DB : INSERT project_participant (projectId, participantId)
+            end
+        end
 
-            Front --> Utilisateur : Création impossible
-
-        else Projet créé
-
-            DB --> API : Projet enregistré
-    deactivate API
+        API -> DB : SELECT project (avec budget + participants)
+        DB --> API : projet complet
+        
+        API -> DB : COMMIT
         deactivate DB
 
-            API --> Front : 201 Projet créé
-deactivate API
+        API --> Front : 201 Projet créé (objet complet)
+        deactivate API
 
-            Front --> Utilisateur : Projet affiché
-deactivate Front
-
-        end
+        Front -> Front : Invalide le cache TanStack Query (projets)
+        Front --> Utilisateur : Redirigé vers /project/:id
+        deactivate Front
 
     end
 
 end
-
 
 @enduml

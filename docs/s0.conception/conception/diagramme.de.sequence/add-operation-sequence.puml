@@ -6,69 +6,53 @@ participant "React Frontend" as Front
 participant "Express API" as API
 database "PostgreSQL" as DB
 
-Utilisateur -> Front : Saisit une dépense
+Utilisateur -> Front : Saisit une dépense (nom, montant, date, catégorie, payeur, participants)
 activate Front
 
-Front -> API : POST /operations
+Front -> Front : Calcule les parts (auto : parts égales / manuel : montants saisis)
+Front -> Front : Valide la cohérence (somme parts == montant total)
+
+Front -> API : POST /api/projects/:id/operations\n{ name, amount, date, categoryId, payerParticipantId,\n  isAmountCalculated, projectId,\n  operationParticipants: [{ participantId, repartitionAmount, isRepartitionAmountCalculated }] }
 activate API
 
-API -> DB : Vérifier projet
+API -> API : Zod parse() — validation du body
+API -> DB : assertProjectOwner(projectId, userId)
 activate DB
-
-DB --> API : Résultat projet
+DB --> API : OK / 403 Forbidden
 deactivate DB
 
-alt Projet introuvable
+alt Accès refusé
+    API --> Front : 403 Forbidden
+    Front --> Utilisateur : Accès refusé
+else Accès autorisé
 
-    API --> Front : 404 Projet introuvable
+    API -> DB : BEGIN TRANSACTION
+    activate DB
 
-    Front --> Utilisateur : Projet introuvable
+    API -> DB : INSERT operation
+    DB --> API : operation.id
 
-else Projet trouvé
+    API -> DB : INSERT operation_participant (x N participants)
+    DB --> API : OK
 
-    API -> API : Vérifier montant
+    API -> DB : budget.findUnique(projectId) — vérifier seuil d'alerte
+    DB --> API : budget | null
 
-    alt Montant invalide
-
-        API --> Front : 400 Montant invalide
-
-        Front --> Utilisateur : Montant invalide
-
-    else Montant valide
-
-        API -> DB : Récupérer participants projet
-        activate DB
-
-        DB --> API : Liste participants
-        deactivate DB
-
-        API -> API : Calculer répartitions
-
-        API -> DB : INSERT opération + répartitions
-        activate DB
-
-        alt Erreur insertion
-
-            DB --> API : Échec insertion
-
-            API --> Front : 500 Création impossible
-
-            Front --> Utilisateur : Création impossible
-
-        else Données enregistrées
-
-            DB --> API : Opération et répartitions enregistrées
-            deactivate DB
-
-            API --> Front : 201 Opération créée
-            deactivate API
-
-            Front --> Utilisateur : Dépense affichée
-            deactivate Front
-
-        end
-
+    alt Budget défini ET seuil dépassé ET aucune alerte active
+        API -> DB : INSERT alert + INSERT app_user_alert
+        DB --> API : alerte créée
     end
+
+    API -> DB : COMMIT
+    DB --> API : transaction OK
+    deactivate DB
+
+    API --> Front : 201 Opération créée
+    deactivate API
+
+    Front -> Front : Invalide le cache TanStack Query\n(opérations, budgets, balance)
+    Front --> Utilisateur : Dépense affichée — budgets et soldes mis à jour
+    deactivate Front
 
 end
 
