@@ -1,9 +1,12 @@
-# #14 — Liste des routes API
+# Liste des routes API
 
 ## Description
-Lister tous les endpoints API REST nécessaires au fonctionnement de LaPince.
-Toutes les routes (hors Auth) sont protégées par un token JWT passé dans le header :
+Liste réelle des endpoints API REST de LaPince, telle qu'implémentée en fin de projet.
+Toutes les routes (hors Auth et Catégories) sont protégées par un token JWT passé dans le header :
 `Authorization: Bearer <token>`
+
+> 📄 Ce document reflète le code final. Pour la conception initiale (Sprint 0) et les écarts constatés,
+> voir [`liste.routes.api-old.md`](./liste.routes.api-old.md).
 
 ---
 
@@ -16,116 +19,107 @@ Toutes les routes (hors Auth) sont protégées par un token JWT passé dans le h
 | POST    | /api/auth/logout   | Déconnexion                         |
 | GET     | /api/auth/me       | Récupérer l'utilisateur connecté    |
 
-> `GET /api/auth/me` est nécessaire pour hydrater l'interface au chargement et vérifier la validité du token.
+> Inchangé par rapport à la conception initiale.
 
 ---
 
 ## Routes Utilisateurs
 
-| Méthode | Route          | Description            |
-|---------|----------------|------------------------|
-| POST    | /api/users     | Créer un utilisateur   |
-| PATCH   | /api/users/:id | Modifier le profil     |
-| DELETE  | /api/users/:id | Supprimer le compte    |
+**Non implémentées dans le MVP final.**
 
-> Pas de `GET /api/users/:id` — `GET /api/auth/me` couvre déjà ce besoin dans le MVP.
+La gestion du profil (modification, suppression de compte) prévue initialement sous `/api/users`
+n'a pas été développée. `GET /api/auth/me` reste la seule route liée à l'utilisateur connecté.
+
+> Cette fonctionnalité reste identifiée comme évolution potentielle ("Page de gestion de compte" — V2).
 
 ---
 
 ## Routes Projets
 
-| Méthode | Route                        | Description                                                     |
-|---------|------------------------------|-----------------------------------------------------------------|
-| GET     | /api/projects                | Lister les projets de l'utilisateur + KPIs globaux             |
-| POST    | /api/projects                | Créer un nouveau projet                                         |
-| GET     | /api/projects/:id            | Récupérer le détail d'un projet (+ balance + résumé budgétaire) |
-| PATCH   | /api/projects/:id            | Modifier un projet                                              |
-| PATCH   | /api/projects/:id/archive    | Archiver / désarchiver un projet                                |
-| DELETE  | /api/projects/:id            | Supprimer un projet                                             |
+| Méthode | Route              | Description                                          |
+|---------|---------------------|------------------------------------------------------|
+| GET     | /api/projects       | Lister les projets de l'utilisateur (pagination cursor-based) |
+| POST    | /api/projects       | Créer un nouveau projet                              |
+| GET     | /api/projects/:id   | Récupérer le détail d'un projet                      |
+| PATCH   | /api/projects/:id   | Modifier un projet (nom, description, type, archivage, budget) |
+| DELETE  | /api/projects/:id   | Supprimer un projet                                  |
 
-> **KPIs** (Tu dois, On te doit, Solde net, Projets actifs) inclus dans `GET /api/projects` pour le MVP.
-> Une route dédiée `GET /api/dashboard` pourrait être envisagée dans une version ultérieure si les besoins en performance l'exigent.
+> **Écart avec la conception initiale** : pas de route `PATCH /api/projects/:id/archive` dédiée —
+> l'archivage se fait via `PATCH /api/projects/:id` avec le champ `isArchived`.
 >
-> **Budget global** géré directement dans `POST` et `PATCH /api/projects/:id` — c'est un détail du projet.
-> Les budgets par catégorie ont leurs propres routes.
+> **Budget** : créé, modifié ou supprimé directement dans ce même `PATCH`, via un objet `budget`
+> ou le flag `deleteBudget: true`. Pas de routes budget séparées (voir plus bas).
 
 ---
 
 ## Routes Participants
 
-| Méthode | Route                                    | Description                    |
-|---------|------------------------------------------|--------------------------------|
-| GET     | /api/projects/:id/participants           | Lister les participants        |
-| POST    | /api/projects/:id/participants           | Ajouter un participant         |
-| PATCH   | /api/projects/:id/participants/:partId   | Modifier un participant        |
-| DELETE  | /api/projects/:id/participants/:partId   | Retirer un participant         |
+| Méthode | Route                              | Description                                              |
+|---------|-------------------------------------|-----------------------------------------------------------|
+| PATCH   | /api/projects/:id/participants     | Ajout, modification et suppression des participants en un seul appel |
 
-> Un participant appartient à un projet, pas à un utilisateur.
+> **Écart avec la conception initiale** : pas de `GET`, `POST` ni `DELETE` séparés.
+> Le front envoie la liste complète des participants souhaités ; le back compare avec l'existant
+> et déduit les créations/modifications/suppressions dans une transaction unique.
 
 ---
 
 ## Routes Opérations
 
-| Méthode | Route                                      | Description              |
-|---------|--------------------------------------------|--------------------------|
-| GET     | /api/projects/:id/operations               | Lister les opérations    |
-| POST    | /api/projects/:id/operations               | Créer une opération      |
-| PATCH   | /api/projects/:id/operations/:opId         | Modifier une opération   |
-| DELETE  | /api/projects/:id/operations/:opId         | Supprimer une opération  |
+| Méthode | Route                                       | Description              |
+|---------|-----------------------------------------------|--------------------------|
+| GET     | /api/projects/:id/operations                 | Lister les opérations du projet |
+| POST    | /api/projects/:id/operations                 | Créer une opération      |
+| PATCH   | /api/projects/:id/operations/:operationId    | Modifier une opération   |
+| DELETE  | /api/projects/:id/operations/:operationId    | Supprimer une opération  |
 
-> Pas de `GET /api/projects/:id/operations/:opId` — au clic sur une ligne, les données sont déjà
-> chargées côté front via la liste. La modale d'édition est pré-remplie directement depuis le state.
->
-> Le body d'une opération inclut la répartition entre participants (table de liaison `LIE` du MCD) :
-> ```json
-> {
->   "type": "debit",
->   "nom": "Dîner Time Out Market",
->   "montant": 128.40,
->   "date": "2026-05-17",
->   "categorie_id": 3,
->   "paye_par": 2,
->   "repartition": [
->     { "participant_id": 1, "montant ou pourcentage": "à définir" },
->     { "participant_id": 2, "montant ou pourcentage": "à définir" },
->     { "participant_id": 3, "montant ou pourcentage": "à définir" }
->   ]
-> }
-> ```
+> Conforme à la conception initiale. Le body inclut la répartition entre participants
+> (`operationParticipants`), avec `repartitionAmount` par participant.
 
 ---
 
-## Routes Budgets par catégorie
+## Routes Budgets
 
-| Méthode | Route                                        | Description                    |
-|---------|----------------------------------------------|--------------------------------|
-| GET     | /api/projects/:id/budgets                    | Lister les budgets par catégorie |
-| POST    | /api/projects/:id/budgets                    | Créer un budget par catégorie  |
-| PATCH   | /api/projects/:id/budgets/:budgetId          | Modifier un budget             |
-| DELETE  | /api/projects/:id/budgets/:budgetId          | Supprimer un budget            |
+| Méthode | Route                        | Description                    |
+|---------|-------------------------------|--------------------------------|
+| GET     | /api/projects/:id/budgets     | Consulter le budget du projet  |
+
+> **Écart avec la conception initiale** : plus de CRUD séparé, et plus de découpage "par catégorie".
+> Un seul budget existe par projet (`Budget.projectId @unique`). Création, modification et suppression
+> passent par `PATCH /api/projects/:id`.
 
 ---
 
 ## Routes Catégories
 
 | Méthode | Route           | Description                      |
-|---------|-----------------|----------------------------------|
+|---------|-----------------|-----------------------------------|
 | GET     | /api/categories | Lister les catégories disponibles |
 
-> Catégories prédéfinies, gérées uniquement par le dev côté back.
-> Pas de `POST`, `PATCH` ou `DELETE` exposés dans le MVP.
+> Seule route de l'API à ne **pas** nécessiter de token JWT.
+> Catégories prédéfinies, aucune opération d'écriture exposée.
 
 ---
 
 ## Routes Alertes
 
-| Méthode | Route                      | Description                    |
-|---------|----------------------------|--------------------------------|
-| GET     | /api/alertes               | Lister les alertes de l'utilisateur connecté |
-| PATCH   | /api/alertes/:alerteId     | Marquer une alerte comme lue   |
+| Méthode | Route                           | Description                                    |
+|---------|----------------------------------|-------------------------------------------------|
+| GET     | /api/alertes                    | Lister les alertes de l'utilisateur connecté     |
+| PATCH   | /api/alertes/:alerteId          | Marquer une alerte comme lue                     |
+| GET     | /api/projects/:id/alertes       | Lister les alertes liées à un projet spécifique  |
 
- > Les alertes sont persistées en base, elles constituent un historique consultable.
- >
- > Pas de `POST` : les alertes sont générées automatiquement par le back quand un seuil est atteint.
- >
- > Pas de `DELETE` : Les alertes sont uniquement marquées lues ou non lues.
+> La route imbriquée `/api/projects/:id/alertes` n'était pas prévue dans la conception initiale —
+> ajoutée en cours de développement pour l'affichage contextuel des alertes sur la page projet.
+
+---
+
+## Routes Solde / Remboursements
+
+| Méthode | Route                          | Description                                  |
+|---------|----------------------------------|-----------------------------------------------|
+| GET     | /api/balance                    | Solde net global de l'utilisateur (tous projets confondus) |
+| GET     | /api/projects/:id/balance       | Solde net des participants d'un projet donné  |
+
+> **Écart avec la conception initiale** : la route prévue `/api/projects/:id/reimbursements`
+> a été renommée en `balance`, et complétée par une route globale (`/api/balance`) non prévue au départ.

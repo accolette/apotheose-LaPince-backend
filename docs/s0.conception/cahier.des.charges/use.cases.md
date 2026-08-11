@@ -1,5 +1,8 @@
 # Use Cases — La Pince
 
+> 📄 Ce document reflète les scénarios réellement livrés. Pour la conception initiale (Sprint 0)
+> et les écarts constatés, voir [`use.cases-old.md`](./use.cases-old.md).
+
 ## Acteurs
 
 | Acteur | Description |
@@ -15,21 +18,15 @@
 ### Scénario nominal
 
 1. L'utilisateur accède à la page d'inscription.
-
 2. Il renseigne son nom, son email et un mot de passe.
-
 3. Il soumet le formulaire.
-
-4. Le système valide les données et crée le compte.
-
-5. L'utilisateur est redirigé vers le dashboard.
+4. Le système valide les données, crée le compte et un projet de démonstration prêt à l'emploi.
+5. L'utilisateur est automatiquement connecté (JWT généré à l'inscription) et redirigé vers la liste de ses projets, sans repasser par l'écran de connexion.
 
 ### Scénarios alternatifs
 
-- **Email déjà utilisé** : le système affiche un message d'erreur et invite l'utilisateur à se connecter.
-
-- **Mot de passe trop faible** : le système affiche les critères de sécurité non respectés.
-
+- **Email déjà utilisé** : le système renvoie une erreur 409 et invite l'utilisateur à se connecter.
+- **Mot de passe trop faible** : le système affiche les critères de sécurité non respectés (validation Zod).
 - **Champ manquant** : le système bloque l'envoi et indique les champs obligatoires.
 
 ---
@@ -41,22 +38,17 @@
 ### Scénario nominal
 
 1. L'utilisateur accède à la page de connexion.
-
 2. Il saisit son email et son mot de passe.
-
 3. Il soumet le formulaire.
-
-4. Le système vérifie les identifiants et ouvre la session.
-
-5. L'utilisateur est redirigé vers son dashboard.
+4. Le système vérifie les identifiants et retourne un token JWT.
+5. L'utilisateur est redirigé vers la liste de ses projets.
 
 ### Scénarios alternatifs
 
-- **Identifiants incorrects** : le système affiche un message d'erreur générique (sans préciser si c'est l'email ou le mot de passe).
-
+- **Identifiants incorrects** : le système affiche un message d'erreur générique 401 (sans préciser si c'est l'email ou le mot de passe).
 - **Compte inexistant** : même message d'erreur générique pour des raisons de sécurité.
 
-- **Mot de passe oublié** : l'utilisateur clique sur "Mot de passe oublié" et reçoit un email de réinitialisation.
+> ❌ **Non implémenté dans le MVP** : il n'existe pas de fonctionnalité "mot de passe oublié" / réinitialisation par email. Un utilisateur qui perd son mot de passe ne peut pas récupérer l'accès à son compte. Reste une évolution potentielle à ajouter au périmètre V2.
 
 ---
 
@@ -67,9 +59,7 @@
 ### Scénario nominal
 
 1. L'utilisateur clique sur le bouton "Se déconnecter".
-
 2. Le système ferme la session et supprime le token d'authentification.
-
 3. L'utilisateur est redirigé vers la page de connexion.
 
 ### Scénarios alternatifs
@@ -78,19 +68,16 @@
 
 ---
 
-## UC-04 — Voir ses projets (Dashboard)
+## UC-04 — Voir ses projets
 
 **Acteur** : Utilisateur (connecté)
 
 ### Scénario nominal
 
-1. L'utilisateur arrive sur le dashboard après connexion.
-
-2. Le système affiche les 4 indicateurs clés : projets actifs, montant dû, montant dû par les autres, solde net.
-
-3. Le système affiche le tableau listant tous ses projets avec nom, participants, budget et solde actuel.
-
-4. L'utilisateur peut cliquer sur une ligne pour accéder au détail d'un projet.
+1. L'utilisateur arrive sur la page `/projects` après connexion.
+2. Le système affiche les indicateurs clés (KPIs) : projets actifs, montant dû, montant dû par les autres, solde net.
+3. Le système affiche la liste paginée de ses projets avec nom, participants, budget et solde actuel.
+4. L'utilisateur peut cliquer sur une ligne pour accéder au détail d'un projet (`/project/:id`).
 
 ### Scénarios alternatifs
 
@@ -104,45 +91,36 @@
 
 ### Scénario nominal
 
-1. L'utilisateur clique sur "Nouveau projet" depuis le dashboard.
-
-2. Il saisit le nom du projet, peut ou non ajouter des budgets et des participants.
-
+1. L'utilisateur clique sur "Nouveau projet" depuis la liste des projets.
+2. Il saisit le nom du projet, peut ou non ajouter un budget et des participants.
 3. Il valide la création.
-
 4. Le système crée le projet et redirige vers sa page de détail.
-
-5. L'utilisateur peut par la suite ajouter des budgets et des participants.
+5. L'utilisateur peut par la suite ajouter un budget et des participants.
 
 ### Scénarios alternatifs
 
 - **Nom manquant** : le système bloque la validation et indique que le nom est obligatoire.
-
-- **Annulation** : l'utilisateur annule et revient au dashboard sans création.
+- **Annulation** : l'utilisateur annule et revient à la liste des projets sans création.
 
 ---
 
-## UC-06 — Gérer les budgets
+## UC-06 — Gérer le budget
 
 **Acteur** : Utilisateur (connecté)
 
 ### Scénario nominal
 
-1. Depuis la page de détail du projet, l'utilisateur accède à la gestion des budgets.
-
-2. Il crée un budget en renseignant : type global et/ou catégorie, montant plafond et seuil d'alerte en %.(par défaut 80%)
-
+1. Depuis la page de détail du projet, l'utilisateur accède à la gestion du budget.
+2. Il définit un budget en renseignant : montant plafond et seuil d'alerte en % (par défaut 80%).
 3. Il valide. Le système enregistre le budget et l'affiche avec sa barre de progression.
-
-4. L'utilisateur peut ajouter plusieurs budgets sur un même projet.
 
 ### Scénarios alternatifs
 
 - **Montant invalide** : le système refuse une valeur nulle ou négative.
+- **Modification** : l'utilisateur peut modifier le montant ou le seuil du budget existant.
+- **Suppression** : l'utilisateur supprime le budget du projet.
 
-- **Modification** : l'utilisateur peut modifier le montant ou le seuil d'un budget existant.
-
-- **Suppression** : l'utilisateur supprime un budget ; le système demande confirmation.
+> ❌ **Écart avec la conception initiale** : un projet ne peut avoir qu'**un seul budget**, géré au niveau global du projet — pas de découpage par catégorie, pas de budgets multiples sur un même projet. Création, modification et suppression se font via la même action de mise à jour du projet.
 
 ---
 
@@ -153,18 +131,15 @@
 ### Scénario nominal
 
 1. Depuis la page de détail du projet, l'utilisateur accède à la gestion des participants.
-
 2. Il ajoute un participant fictif en renseignant son prénom.
-
 3. Le système enregistre le participant et l'affiche dans la liste du projet.
-
 4. L'utilisateur peut ajouter autant de participants que nécessaire.
 
 ### Scénarios alternatifs
 
 - **Nom manquant** : le système bloque l'ajout et indique que le prénom est obligatoire.
-
 - **Suppression** : l'utilisateur supprime un participant ; si des dépenses lui sont associées, le système avertit que la suppression impactera les calculs.
+- **"Moi"** : l'utilisateur peut s'ajouter automatiquement comme participant via un bouton dédié, qui rattache son compte au participant créé.
 
 ---
 
@@ -174,16 +149,11 @@
 
 ### Scénario nominal
 
-1. L'utilisateur clique sur un projet depuis le dashboard.
-
+1. L'utilisateur clique sur un projet depuis la liste des projets.
 2. Le système affiche la page de détail avec :
-
-   - Le récapitulatif des budgets et leur avancement.
-
+   - Le récapitulatif du budget et son avancement.
    - La liste des dépenses du projet.
-
    - La liste des participants.
-
    - Un résumé des soldes de chaque participant.
 
 ### Scénarios alternatifs
@@ -196,26 +166,20 @@
 
 **Acteur** : Utilisateur (connecté)
 
-**Include** : UC-09 (Répartir par participant)
+**Include** : UC-10 (Répartir par participant)
 
 ### Scénario nominal
 
 1. Depuis la page de détail d'un projet, l'utilisateur clique sur "Ajouter une dépense".
-
 2. Il renseigne : nom, montant, date, catégorie et participant payeur.
-
-3. Il définit quels participants sont concernés par la dépense et si la répartition est équitable ou non.
-
-4. Il valide. Le système enregistre la dépense et met à jour les budgets et les soldes.
+3. Il sélectionne les participants concernés par la dépense.
+4. Il valide. Le système enregistre la dépense et met à jour le budget et les soldes.
 
 ### Scénarios alternatifs
 
 - **Montant manquant ou invalide** : le système bloque la validation.
-
 - **Aucun participant sélectionné** : le système bloque la validation et indique qu'au moins un participant doit être concerné.
-
-- **Catégorie sans budget** : la dépense est enregistrée mais aucun budget n'est impacté.
-
+- **Projet archivé** : impossible d'ajouter une dépense sur un projet archivé.
 
 ---
 
@@ -226,20 +190,16 @@
 ### Scénario nominal
 
 1. Lors de la saisie d'une dépense, l'utilisateur choisit les participants concernés.
-
-2. Par défaut, la dépense est partagée équitablement entre tous les participants sélectionnés.
-
-3. L'utilisateur peut modifier manuellement le montant attribué à chaque participant.
-
+2. Par défaut, chaque participant sélectionné a sa part calculée automatiquement, à parts égales entre tous les participants "automatiques" (gestion précise des centimes et du reste d'arrondi).
+3. L'utilisateur peut fixer manuellement le montant d'un ou plusieurs participants — le reste continue d'être réparti automatiquement entre les autres.
 4. Le système vérifie que la somme des montants individuels correspond au total de la dépense.
-
 5. L'utilisateur valide.
 
 ### Scénarios alternatifs
 
 - **Somme incorrecte** : le système affiche un écart et bloque la validation tant que les montants ne correspondent pas au total.
 
-- **Répartition automatique** : l'utilisateur peut recliquer sur "Répartir équitablement" pour réinitialiser les montants.
+> Cette répartition automatique se fait uniquement à **parts égales** — pas de pondération par pourcentage individualisé (évolution potentielle V3).
 
 ---
 
@@ -250,14 +210,12 @@
 ### Scénario nominal
 
 1. Depuis la liste des dépenses, l'utilisateur sélectionne une dépense.
-
 2. Il modifie les champs souhaités et valide.
-
-3. Le système met à jour la dépense et recalcule les budgets et les soldes.
+3. Le système met à jour la dépense et recalcule le budget et les soldes.
 
 ### Scénarios alternatifs
 
-- **Suppression** : l'utilisateur clique sur "Supprimer" ; le système demande confirmation avant de supprimer définitivement et de recalculer les soldes.
+- **Suppression** : l'utilisateur supprime une dépense ; le système recalcule les soldes.
 
 ---
 
@@ -267,68 +225,46 @@
 
 ### Scénario nominal
 
-1. Depuis la page de détail d'un projet, l'utilisateur consulte la section remboursements.
-
+1. Depuis la page de détail d'un projet, l'utilisateur consulte la section balance.
 2. Le système affiche le solde de chaque participant (ce qu'il a payé vs ce qu'il doit).
+3. Le système affiche la liste optimisée des remboursements : qui doit combien à qui, avec un minimum de transactions (algorithme glouton).
 
-3. Le système affiche la liste optimisée des remboursements : qui doit combien à qui, avec un minimum de transactions.
+Une vue globale du solde net de l'utilisateur, tous projets confondus, est également disponible.
 
 ### Scénarios alternatifs
 
 - **Comptes équilibrés** : le système affiche un message indiquant qu'aucun remboursement n'est nécessaire.
-
 - **Aucune dépense** : la section affiche un état vide.
 
---- 
+---
 
 ## UC-13 — Consulter et gérer les alertes
- 
+
 **Acteur** : Utilisateur connecté
- 
+
 ### Scénario nominal
 
-1. Sur le dashboard, l'utilisateur voit dans le tableau des projets une colonne alerte avec une icône cloche et une pastille indiquant le nombre d'alertes non lues pour chaque projet.
-
-2. Il clique sur un projet pour accéder à sa page de détail.
-
-3. Un bandeau ou une notification signale les seuils d'alerte atteints sur ce projet.
-
-4. L'utilisateur marque une alerte comme lue — elle disparaît de la vue principale.
-
-5. Il peut accéder à l'onglet **Alertes** de la page de détail du projet pour consulter l'historique complet de toutes les alertes du projet, lues ou non lues.
+1. L'utilisateur consulte la liste de ses alertes (toutes projets confondus) ou les alertes d'un projet spécifique.
+2. Un seuil d'alerte atteint sur le budget d'un projet génère automatiquement une alerte côté back.
+3. L'utilisateur marque une alerte comme lue.
 
 ### Scénarios alternatifs
 
-- **Aucune alerte** : la cloche s'affiche sans pastille et l'onglet Alertes indique qu'aucune alerte n'a été déclenchée.
-
-- **Plusieurs alertes non lues** : chaque alerte peut être marquée comme lue individuellement.
-
-- **Alerte déjà lue** : visible dans l'historique de l'onglet Alertes mais n'apparaît plus dans la vue principale du projet.
+- **Aucune alerte** : aucune alerte n'a été déclenchée sur les projets de l'utilisateur.
+- **Alerte déjà lue** : reste consultable dans l'historique.
 
 ---
 
 ## UC-14 — Archiver un projet
- 
+
 **Acteur** : Utilisateur connecté
- 
+
 ### Scénario nominal
 
-1. Depuis la page de détail d'un projet, l'utilisateur clique sur le bouton "Archiver le projet".
-
-2. Le système demande confirmation avant d'archiver.
-
-3. L'utilisateur confirme. Le projet passe en état archivé.
-
-4. Le projet disparaît de la liste principale des projets sur le dashboard.
-
-5. Il reste consultable depuis l'onglet **Archivés** du dashboard.
+1. Depuis la page de détail d'un projet, l'utilisateur archive ou désarchive le projet (mise à jour du champ `isArchived`).
+2. Un projet archivé n'est plus modifiable (dépenses, participants, budget).
+3. Il reste consultable et peut être désarchivé à tout moment.
 
 ### Scénarios alternatifs
 
-- **Annulation** : l'utilisateur annule la confirmation — le projet reste actif.
-
-- **Consultation d'un projet archivé** : depuis l'onglet Archives, l'utilisateur peut accéder à la page de détail du projet en lecture seule.
-
-- **Désarchivage** : depuis l'onglet Archives ou la page de détail, l'utilisateur peut restaurer le projet — il réapparaît dans la liste principale du dashboard.
-
----
+- **Consultation d'un projet archivé** : accessible en lecture, sans possibilité de modification tant qu'il n'est pas désarchivé.
