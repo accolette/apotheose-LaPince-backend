@@ -19,7 +19,7 @@
     - [3. Configurer les variables d'environnement](#3-configurer-les-variables-denvironnement)
     - [4. Lancer l'environnement Docker](#4-lancer-lenvironnement-docker)
     - [5. Appliquer les migrations et le seed](#5-appliquer-les-migrations-et-le-seed)
-    - [6. L'API est disponible](#6-lapi-est-disponible)
+    - [6. Les services sont disponibles :](#6-les-services-sont-disponibles-)
   - [Variables d'environnement](#variables-denvironnement)
   - [Scripts disponibles](#scripts-disponibles)
   - [Structure du projet](#structure-du-projet)
@@ -59,7 +59,7 @@
 - Calculer automatiquement les remboursements entre participants
 
 Ce repository contient exclusivement la **couche back-end** : API REST, logique métier, accès aux données.
-Le repository front-end est disponible ici : [`la-pince.frontend`](https://github.com/O-clock-Helsinki/projet-cda-LaPince-frontend)
+Le repository front-end est disponible ici : [`apotheose-LaPince-frontend`](https://github.com/accolette/apotheose-LaPince-frontend)
 
 ---
 
@@ -124,6 +124,7 @@ Avant de démarrer, assure-toi d'avoir installé :
 - [Docker](https://www.docker.com/) et Docker Compose
 - [Node.js 24 LTS](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
+- Le **front-end** peut être lancé et est accessible — voir [`apotheose-LaPince-frontend`](https://github.com/accolette/apotheose-LaPince-frontend)
 
 ---
 
@@ -132,8 +133,8 @@ Avant de démarrer, assure-toi d'avoir installé :
 ### 1. Cloner le repository
 
 ```bash
-git clone https://github.com/O-clock-Helsinki/projet-cda-LaPince-backend.git
-cd projet-cda-LaPince-backend
+git clone https://github.com/accolette/apotheose-LaPince-frontend.git
+cd apotheose-LaPince-frontend
 ```
 
 ### 2. Installer les dépendances
@@ -141,7 +142,7 @@ cd projet-cda-LaPince-backend
 ```bash
 npm install
 ```
-> ⚠️ Ne pas audit fix (Une vunérabilité qui ne nous concerne pas, car sinon repasse en prisma 6 et génération d'erreurs)
+> ⚠️ Ne pas audit fix (Une vulnérabilité qui ne nous concerne pas, car sinon repasse en prisma 6 et génération d'erreurs)
 
 ### 3. Configurer les variables d'environnement
 
@@ -170,9 +171,20 @@ npm run db:generate
 npm run db:migrate
 npm run db:seed
 ```
-> Une fois les manipulations terminées, relancer les conteneurs Docker
+> Une fois les manipulations terminées, relancer les conteneurs Docker :
 
-### 6. L'API est disponible
+```bash
+npm run docker:down && npm run docker:up
+```
+
+### 6. Les services sont disponibles :
+
+Le front, s'il est lancé (Vite, port par défaut) :
+```
+http://localhost:5173
+```
+
+L'API back-end (et sa documentation Swagger à la racine) :
 
 ```
 http://localhost:3000
