@@ -79,10 +79,11 @@ Le back-end applique les principes de **Separation of Concerns (SoC)** en couche
 
 ```
 src/
-├── routes/        → définition des endpoints
+├── routers/        → définition des endpoints
 ├── controllers/   → traitement des requêtes et réponses HTTP
 ├── services/      → logique métier pure
 ├── middlewares/   → auth, validation, gestion des erreurs
+├── schemas/       → schémas de validation Zod (auth, project, alert...)
 └── lib/           → utilitaires partagés (Prisma client, erreurs custom...)
 ```
 
@@ -124,7 +125,6 @@ Avant de démarrer, assure-toi d'avoir installé :
 - [Docker](https://www.docker.com/) et Docker Compose
 - [Node.js 24 LTS](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
-- Le **front-end** peut être lancé et est accessible — voir [`apotheose-LaPince-frontend`](https://github.com/accolette/apotheose-LaPince-frontend)
 
 ---
 
@@ -133,8 +133,8 @@ Avant de démarrer, assure-toi d'avoir installé :
 ### 1. Cloner le repository
 
 ```bash
-git clone https://github.com/accolette/apotheose-LaPince-frontend.git
-cd apotheose-LaPince-frontend
+git clone https://github.com/accolette/apotheose-LaPince-backend.git
+cd apotheose-LaPince-backend
 ```
 
 ### 2. Installer les dépendances
@@ -253,7 +253,8 @@ projet-cda-LaPince-backend/
 │   ├── config/              ← configuration (env, cors...)
 │   ├── controllers/         ← traitement des requêtes HTTP
 │   ├── middlewares/         ← auth, validation, erreurs, rate limiter
-│   ├── routes/              ← définition des endpoints
+│   ├── routers/             ← définition des endpoints
+│   ├── schemas/             ← schémas de validation Zod
 │   ├── services/            ← logique métier pure
 │   ├── lib/                 ← prisma client, classes d'erreurs custom
 │   └── app.ts               ← configuration Express principale
@@ -308,20 +309,20 @@ Authorization: Bearer <token>
 
 ### Résumé des endpoints
 
-| Domaine | Méthodes | Base URL |
-|---|---|---|
-| Auth | POST, GET | `/api/auth` |
-| Utilisateurs | POST, PATCH, DELETE | `/api/users` |
-| Projets | GET, POST, PATCH, DELETE | `/api/projects` |
-| Participants | GET, POST, PATCH, DELETE | `/api/projects/:id/participants` |
-| Opérations | GET, POST, PATCH, DELETE | `/api/projects/:id/operations` |
-| Budgets | GET, POST, PATCH, DELETE | `/api/projects/:id/budgets` |
-| Catégories | GET | `/api/categories` |
-| Alertes | GET, PATCH | `/api/alertes` |
-| Remboursements | GET | `/api/projects/:id/reimbursements` |
+
+| Domaine                | Méthodes                                           | Base URL                                                            |
+| ---------------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
+| Auth                   | POST, GET                                          | `/api/auth`                                                         |
+| Projets                | GET, POST, PATCH, DELETE                           | `/api/projects`                                                     |
+| Participants           | PATCH (ajout/modif/suppression en un seul appel)   | `/api/projects/:id/participants`                                    |
+| Opérations             | GET, POST, PATCH, DELETE                           | `/api/projects/:id/operations`                                      |
+| Budgets                | GET (création/modif via `PATCH /api/projects/:id`) | `/api/projects/:id/budgets`                                         |
+| Catégories             | GET *(non protégée par JWT)*                       | `/api/categories`                                                   |
+| Alertes                | GET, PATCH                                         | `/api/alertes`                                                      |
+| Solde / remboursements | GET                                                | `/api/balance` (global) et `/api/projects/:id/balance` (par projet) |
 
 > 📄 Liste complète et détaillée des routes : [`docs/routes-api.md`](docs/s0.conception/cahier.des.charges/liste.routes.api.md)
-> 📄 Documentation interactive Swagger disponible sur : `http://localhost:3000/api-docs` *(à venir)*
+> 📄 Documentation interactive Swagger disponible sur : `http://localhost:3000/` 
 
 ---
 
@@ -412,16 +413,16 @@ Chaque Pull Request doit :
 
 ## Documentation
 
-| Document | Description | Lien |
-|---|---|---|
-| Architecture & choix techniques | Justification des technologies et de l'architecture | `docs/architecture.md` |
-| Spécifications techniques | Stack complète avec versions et justifications | `docs/specifications-techniques.md` |
-| Routes API | Liste complète des endpoints | `docs/routes-api.md` |
-| Dictionnaire de données | Description de chaque champ de chaque table | `docs/dictionnaire-de-donnees.md` |
-| Merise (MCD / MLD / MPD) | Modélisation de la base de données | `docs/merise/` |
-| Algorithme de répartition | Logique de calcul des balances et remboursements | `docs/algorithme-repartition.md` |
-| Charte graphique & maquettes | Éléments visuels du projet | `docs/design/` |
-| Swagger UI | Documentation interactive de l'API | `http://localhost:3000/api-docs` |
+| Document                        | Description                                         | Lien                                |
+| ------------------------------- | --------------------------------------------------- | ----------------------------------- |
+| Architecture & choix techniques | Justification des technologies et de l'architecture | `docs/architecture.md`              |
+| Spécifications techniques       | Stack complète avec versions et justifications      | `docs/specifications-techniques.md` |
+| Routes API                      | Liste complète des endpoints                        | `docs/routes-api.md`                |
+| Dictionnaire de données         | Description de chaque champ de chaque table         | `docs/dictionnaire-de-donnees.md`   |
+| Merise (MCD / MLD / MPD)        | Modélisation de la base de données                  | `docs/merise/`                      |
+| Algorithme de répartition       | Logique de calcul des balances et remboursements    | `docs/algorithme-repartition.md`    |
+| Charte graphique & maquettes    | Éléments visuels du projet                          | `docs/design/`                      |
+| Swagger UI                      | Documentation interactive de l'API                  | `http://localhost:3000/`    |
 
 ---
 
@@ -461,7 +462,7 @@ This backend provides the core logic for:
 - Budget tracking and alerts
 - Automatic reimbursement calculations
 
-[Frontend repo](https://github.com/O-clock-Helsinki/projet-cda-LaPince-frontend)
+[Frontend repo](https://github.com/accolette/apotheose-LaPince-frontend.git)
 
 ---
 
@@ -477,7 +478,7 @@ Backend structure:
 ```
 
 src/
-├── routes
+├── routers
 ├── controllers
 ├── services
 ├── middlewares
@@ -510,17 +511,25 @@ src/
 ## Setup
 
 ```bash
-git clone https://github.com/O-clock-Helsinki/projet-cda-LaPince-backend.git
-cd projet-cda-LaPince-backend
+git clone https://github.com/accolette/apotheose-LaPince-backend.git
+cd apotheose-LaPince-backend
 npm install
 cp .env.example .env
 cp .dockerignore.example .dockerignore
 npm run docker:up
+npm run db:generate
 npm run db:migrate
 npm run db:seed
+npm run docker:down && npm run docker:up
 ```
 
-API:
+FRONT, if set up :
+```
+http://localhost:5173
+```
+
+
+API (Swagger docs served at the root):
 
 ```
 http://localhost:3000
@@ -548,22 +557,19 @@ http://localhost:8080
 
 Main routes:
 
-* `/api/auth`
-* `/api/users`
-* `/api/projects`
-* `/api/operations`
-* `/api/participants`
-* `/api/budgets`
-* `/api/categories`
-* `/api/alertes`
+* `/api/auth` — register, login, logout, current user
+* `/api/projects` — CRUD, nested operations, participants (bulk update), budget (read-only, managed via project update), alerts
+* `/api/balance` — global user balance
+* `/api/categories` — predefined categories *(no JWT required)*
+* `/api/alertes` — list & mark as read
 
-JWT required:
+JWT required (except `/api/auth` and `/api/categories`):
 
 ```
 Authorization: Bearer <token>
 ```
 
-Swagger: `/api-docs`
+Swagger: `http://localhost:3000`
 
 ---
 
