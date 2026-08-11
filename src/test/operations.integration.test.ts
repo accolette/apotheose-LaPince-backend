@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
-import "./config/global-setup";
 import { prisma } from "../lib/prisma";
 
-const BASE_URL = "http://localhost:3001/api";
+function getBaseUrl() {
+	return `http://localhost:${process.env.PORT}/api`;
+}
+const BASE_URL = getBaseUrl();
 const AUTH_URL = `${BASE_URL}/auth`;
 const PROJECTS_URL = `${BASE_URL}/projects`;
 
