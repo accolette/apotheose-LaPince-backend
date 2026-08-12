@@ -1,5 +1,9 @@
 # Analyse des risques — La Pince
 
+> 📄 Ce document reflète les mesures réellement mises en place à la livraison du 15/06/2026.
+> Pour l'analyse initiale (Sprint 0) et les écarts constatés, voir
+> [`analyse-risques-la-pince-old.md`](./analyse-risques-la-pince-old.md).
+>
 > Identifier les risques pouvant survenir pendant le développement et les solutions envisagées pour les limiter.
 
 ---
@@ -30,17 +34,17 @@
 
 ---
 
-## Solutions envisagées pour chaque risque critique
+## Solutions mises en place pour chaque risque critique
 
 ### 🔴 Erreur dans l'algorithme de calcul des remboursements
 
 L'algorithme de répartition des dépenses et de calcul des remboursements est le cœur métier de l'application. Une erreur fausserait tous les soldes et briserait la confiance des utilisateurs.
 
-**Solutions :**
+**Mesures réellement mises en place :**
 
-- Écrire des tests unitaires exhaustifs couvrant tous les cas de répartition (égale, inégale, participants partiels) → *évite des calculs faux qui passeraient inaperçus jusqu'en production*
-- Valider l'algorithme avec des jeux de données réels avant intégration → *évite les cas limites non anticipés (montants décimaux, un seul participant, répartition à 0€)*
-- Faire relire la logique par un pair avant de merger → *évite les erreurs de logique qu'un seul regard ne détecte pas*
+- Tests unitaires sur l'algorithme glouton (`greedy.unit.test.ts`, 12 cas couverts) → évite des calculs faux qui passeraient inaperçus jusqu'en production
+- Jeu de données de seed dédié à la validation de cas limites réels (participant seul, répartition inégale, balances nulles, greedy à 2/3/4 participants) → évite les cas limites non anticipés
+- Validation croisée des choix techniques via les pull requests → participe à la fiabilisation, sans être une revue de code formalisée systématique (voir plus bas)
 
 ---
 
@@ -48,11 +52,13 @@ L'algorithme de répartition des dépenses et de calcul des remboursements est l
 
 Un token mal géré (non expiré, non invalidé à la déconnexion, secret faible) peut exposer les données de tous les utilisateurs.
 
-**Solutions :**
+**Mesures réellement mises en place :**
 
-- Utiliser une clé secrète forte stockée en variable d'environnement → *évite qu'un attaquant puisse forger des tokens valides*
-- Ne jamais stocker le token dans le localStorage — préférer un cookie `httpOnly` → *évite les attaques XSS qui pourraient voler le token*
-- Tester les routes protégées avec des tokens invalides ou expirés → *évite des routes accessibles sans authentification valide*
+- Clé secrète forte stockée en variable d'environnement, avec validation obligatoire au démarrage du serveur (`requireEnv`, principe fail fast) → évite qu'un attaquant puisse forger des tokens valides, et évite un serveur qui tourne silencieusement sans secret valide
+- Token JWT avec expiration fixe (7 jours) → limite la fenêtre d'exploitation d'un token compromis
+- Tests des routes protégées avec des tokens invalides ou expirés (tests unitaires et d'intégration) → évite des routes accessibles sans authentification valide
+
+**Écart assumé avec la conception initiale :** le stockage du token dans un cookie `httpOnly` était envisagé pour se prémunir des attaques XSS. Faute de temps, le token est finalement stocké en `localStorage` côté front. C'est un axe d'amélioration identifié plutôt qu'un oubli — le risque XSS reste partiellement couvert par la sanitization des entrées (Zod, express-xss-sanitizer) et l'absence de rendu HTML brut côté client.
 
 ---
 
@@ -60,121 +66,104 @@ Un token mal géré (non expiré, non invalidé à la déconnexion, secret faibl
 
 Une erreur de modélisation détectée tard entraîne des migrations complexes, voire une réécriture partielle du schéma et des requêtes.
 
-**Solutions :**
+**Mesures réellement mises en place :**
 
-- Valider le MCD et le schéma Prisma avant de commencer le développement → *évite de découvrir trop tard qu'une relation est mal modélisée*
-- Travailler en migrations successives et versionnées dès le début → *évite de perdre la traçabilité des changements de schéma*
-- Ne pas hésiter à refactoriser tôt plutôt que de patcher tard → *évite une dette technique qui s'accumule et devient ingérable*
+- MCD et schéma Prisma validés avant le développement des fonctionnalités
+- 7 migrations successives et versionnées tout au long du projet (traçabilité complète de l'évolution du schéma, de l'initialisation jusqu'aux ajustements de contraintes)
+- Refactorisations effectuées en cours de route plutôt que différées (ex. évolution du modèle de budget, ajout du type de projet)
 
 ---
 
 ### 🔴 Sous-estimation du temps de développement
 
-Le projet comporte des fonctionnalités complexes (répartition inégale, calcul des remboursements, alertes automatiques) qui peuvent prendre plus de temps que prévu.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Définir un MVP strict avec uniquement les fonctionnalités essentielles → *évite de s'éparpiller et de ne rien livrer dans les délais*
-- Découper chaque fonctionnalité en tâches estimées individuellement → *évite les estimations floues sur des blocs trop larges*
-- Réévaluer les priorités à chaque fin de sprint → *évite de continuer dans une mauvaise direction sans s'en rendre compte*
+- MVP strict défini et respecté (voir périmètre fonctionnel, section 2.3)
+- Découpage en tâches individuelles suivies via GitHub Projects
+- Réévaluation des priorités à chaque fin de sprint
 
 ---
 
 ### 🔴 Périmètre fonctionnel trop large pour le MVP
 
-Vouloir tout faire dès la première version risque de ne rien finir correctement.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Définir clairement ce qui est dans le MVP et ce qui est reporté en V2 → *évite de perdre de vue le périmètre initial, qui dilue les efforts sur trop de fonctionnalités à la fois*
-- Toute nouvelle idée en cours de développement est ajoutée en backlog, pas au sprint en cours → *évite les interruptions qui désorganisent le travail en cours*
-- Le MVP se concentre sur : auth, projets, participants, opérations, répartition, remboursements et gestion des alertes → *évite de livrer une application incomplète sur tous les fronts plutôt que complète sur l'essentiel*
+- Périmètre MVP clairement défini et respecté, évolutions repoussées en V2/V3/V4 (voir section 2.3)
+- Nouvelles idées ajoutées au backlog plutôt qu'au sprint en cours
 
 ---
 
 ### 🔴 Absence de sanitization des données entrantes (formulaires)
 
-Des données non validées ou non nettoyées côté serveur peuvent exposer l'application à des injections SQL, des attaques XSS ou des données corrompues en base.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Utiliser **Zod** pour valider et typer toutes les données entrantes côté back avant tout traitement → *évite que des données malformées ou malveillantes atteignent la base de données*
-- Ne jamais faire confiance aux données envoyées par le client, même si le front les valide déjà → *évite les contournements via des appels API directs (Postman, scripts)*
-- Échapper toutes les valeurs insérées en base via Prisma (ORM qui protège nativement contre les injections SQL) → *évite les injections SQL par construction*
-- Valider les types, formats et longueurs maximales de chaque champ (montant positif, email valide, chaîne non vide…) → *évite la corruption silencieuse des données en base*
+- Validation Zod sur toutes les routes API, côté back, avant tout traitement
+- Double validation : le front revalide également les données (ex. montant de budget, longueur des noms de participants) avant envoi, sans jamais faire confiance uniquement à cette validation côté client
+- Protection native contre les injections SQL par l'usage de Prisma (requêtes paramétrées)
+- express-xss-sanitizer en middleware global pour neutraliser les scripts malveillants dans les corps de requêtes
 
 ---
 
-## Solutions envisagées pour chaque risque modéré
+## Solutions mises en place pour chaque risque modéré
 
 ### 🟡 Problèmes de performance sur les requêtes avec beaucoup de données
 
-Des requêtes non optimisées sur des groupes avec de nombreux participants ou opérations peuvent dégrader l'expérience utilisateur.
+**Mesures réellement mises en place :**
 
-**Solutions :**
+- Pagination par curseur sur la liste des projets (`take: 5`) et sur les listes d'opérations
+- Sélection ciblée des champs Prisma (`select`) plutôt que des requêtes complètes, pour limiter la charge retournée
 
-- Paginer les listes d'opérations côté back dès le départ → *évite de charger l'intégralité de l'historique en une seule requête*
-- Ajouter des index sur les colonnes fréquemment filtrées (ex. `groupId`, `userId`) → *évite les full scans sur des tables qui grossissent*
-- Mesurer les temps de réponse sur des jeux de données volumineuses avant la livraison → *évite de découvrir les problèmes de performance seulement en production*
+**Écart assumé avec la conception initiale :** l'ajout d'index dédiés sur les colonnes les plus filtrées (`projectId`, `appUserId`) était envisagé mais n'a pas été formalisé (aucune directive `@@index` au-delà des clés primaires et contraintes uniques dans le schéma). Le volume de données du MVP ne le rendait pas critique à ce stade — reste un axe d'optimisation identifié avant un passage à l'échelle.
 
 ---
 
 ### 🟡 Incompatibilité entre les versions des dépendances
 
-Un conflit de versions entre librairies peut bloquer le build ou introduire des comportements inattendus.
+**Mesures réellement mises en place :**
 
-**Solutions :**
+- Dépendances versionnées explicitement dans `package.json`
+- `package-lock.json` partagé et versionné sur le dépôt
+- Build et tests vérifiés en CI (GitHub Actions) à chaque push et pull request
 
-- Versionner explicitement toutes les dépendances dans `package.json` (pas de `*` ni de `^` non maîtrisé) → *évite les mises à jour silencieuses qui cassent le build*
-- Partager un fichier `package-lock.json` commun via le dépôt → *évite les divergences d'environnement entre membres de l'équipe*
-- Tester le build en CI à chaque push → *évite qu'une incompatibilité passe inaperçue jusqu'à la livraison*
+**Écart assumé avec la conception initiale :** l'installation en CI utilise `npm i` plutôt que `npm ci`. La différence entre les deux commandes était bien identifiée par l'équipe (documentée en commentaire dans le workflow), mais `npm i` a été conservé — ce qui n'offre pas la garantie stricte d'installation déterministe que permettrait `npm ci`.
 
 ---
 
 ### 🟡 Gestion incorrecte des erreurs API côté front
 
-Des erreurs non gérées (500, timeout, 401) peuvent laisser l'utilisateur face à une interface bloquée ou un comportement silencieux trompeur.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Centraliser la gestion des erreurs HTTP dans un intercepteur Axios → *évite de dupliquer la logique de traitement des erreurs dans chaque appel*
-- Afficher un message explicite à l'utilisateur pour chaque type d'erreur (réseau, session expirée, erreur serveur) → *évite que l'utilisateur reste bloqué sans comprendre ce qui s'est passé*
-- Logger les erreurs inattendues côté front pour faciliter le débogage → *évite de devoir reproduire le problème à l'aveugle en cas de rapport de bug*
+- Gestion centralisée des réponses HTTP dans `api.ts` (fonction `handleResponse` commune à tous les appels), avec traitement dédié pour les statuts 401, 429 et 500
+- Messages explicites affichés à l'utilisateur via Sonner selon le type d'erreur
+- Événement `auth:unauthorized` propagé à l'`AuthContext` pour une déconnexion silencieuse en cas de session expirée
 
 ---
 
 ### 🟡 Manque de communication sur les choix techniques
 
-Une décision technique prise isolément peut créer des incohérences dans l'architecture ou des incompréhensions entre membres de l'équipe.
+**Mesures réellement mises en place :**
 
-**Solutions :**
+- Choix techniques discutés et documentés en pull request
+- Merges systématiquement réalisés par une personne différente de l'auteur de la PR
 
-- Documenter les choix techniques structurants dans un fichier dédié (ex. `DECISIONS.md`) → *évite que les raisons d'un choix soient perdues ou contestées plus tard*
-- Soumettre tout choix impactant à une validation collective avant mise en œuvre → *évite les décisions unilatérales qui créent des frictions dans l'équipe*
-- Utiliser les pull requests comme espace de discussion technique → *évite que les désaccords remontent uniquement lors des rétrospectives*
+**Écart assumé avec la conception initiale :** un fichier `DECISIONS.md` dédié était envisagé pour centraliser les choix structurants ; il n'a pas été mis en place. La revue de code n'a par ailleurs pas été systématique — certaines PR ont été mergées sans review formalisée (validée uniquement par le changement d'auteur du merge).
 
 ---
 
 ### 🟡 Dépendance à une seule personne sur une partie critique
 
-Si un seul membre maîtrise une partie du code (ex. l'algorithme de répartition ou la configuration CI), son absence peut bloquer le projet.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Pratiquer la revue de code systématique pour diffuser la connaissance → *évite qu'une partie du projet reste une boîte noire pour le reste de l'équipe*
-- Documenter les parties complexes (algorithmes, configuration d'infra) dans le README ou un wiki → *évite de dépendre de la mémoire d'une seule personne*
-- Alterner les responsabilités sur les tâches critiques d'un sprint à l'autre → *évite que les compétences restent silotées dans la durée*
+- Documentation des parties complexes dans les README et la documentation Swagger
+- Alternance partielle des responsabilités entre membres au fil des sprints (full-stack tournant)
 
 ---
 
-## Solutions envisagées pour chaque risque faible
+## Solutions mises en place pour le risque faible
 
 ### 🟢 Mauvaise priorisation des tâches
 
-Des tâches mal ordonnées peuvent bloquer d'autres membres ou mener à livrer des fonctionnalités secondaires avant les fonctionnalités essentielles.
+**Mesures réellement mises en place :**
 
-**Solutions :**
-
-- Prioriser le backlog en début de sprint selon la valeur métier et les dépendances techniques → *évite de travailler sur des tâches non bloquantes pendant que des tâches critiques attendent*
-- Identifier explicitement les dépendances entre tâches lors du sprint planning → *évite les blocages en cours de sprint faute d'un prérequis non anticipé*
-- Revoir la priorisation en daily si une tâche prend plus de temps que prévu → *évite de rigidifier le sprint face à des imprévus*
+- Backlog priorisé en début de sprint via GitHub Projects
+- Priorisation réajustée lors des dailies en cas d'imprévu
