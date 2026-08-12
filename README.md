@@ -247,27 +247,28 @@ Idem pour le `.dockerignore.example` en `.dockerignore`
 projet-cda-LaPince-backend/
 ├── prisma/
 │   ├── migrations/          ← historique des migrations
-│   ├── seed.ts              ← données initiales (catégories)
+│   ├── seed.ts              ← données initiales (catégories, projet de démo)
 │   └── schema.prisma        ← modèle de données
 ├── src/
-│   ├── config/              ← configuration (env, cors...)
-│   ├── controllers/         ← traitement des requêtes HTTP
-│   ├── middlewares/         ← auth, validation, erreurs, rate limiter
-│   ├── routers/             ← définition des endpoints
-│   ├── schemas/             ← schémas de validation Zod
-│   ├── services/            ← logique métier pure
-│   ├── lib/                 ← prisma client, classes d'erreurs custom
-│   └── app.ts               ← configuration Express principale
-├── tests/
-│   ├── unit/
-│   └── integration/
-├── docs/                    ← documentation du projet
+│   ├── config/               ← env, cors, swagger
+│   ├── controllers/          ← traitement des requêtes HTTP (+ *.unit.test.ts colocalisés)
+│   ├── routers/               ← définition des endpoints
+│   ├── services/               ← logique métier pure (+ *.unit.test.ts colocalisés)
+│   ├── schemas/                ← schémas de validation Zod
+│   ├── middlewares/            ← auth, gestion des erreurs, validation (+ *.unit.test.ts colocalisés)
+│   ├── lib/                    ← client Prisma, erreurs custom, algorithme glouton (+ *.unit.test.ts colocalisés)
+│   ├── docs/                   ← spécifications Swagger (fichiers .yml)
+│   ├── test/                   ← tests d'intégration (*.integration.test.ts) + global-setup.ts
+│   └── app.ts                  ← configuration Express principale
+├── docs/                     ← documentation de conception (cahier des charges, MERISE, RGPD, dailies...)
 ├── .env.example
+├── .env.test.example
 ├── .gitignore
 ├── biome.json
 ├── docker-compose-dev.yml
 ├── package.json
-└── tsconfig.json
+├── tsconfig.json
+└── .github/workflows/ci.yml
 ```
 
 > 📄 Schéma visuel de l'arborescence : [`docs/arborescence.png`](docs/s0.conception/conception/arborescence_front_end.PNG)
@@ -483,7 +484,9 @@ src/
 ├── services
 ├── middlewares
 ├── schemas
-└── lib
+├── lib
+├── docs (Swagger .yml specs)
+└── test (integration tests)
 
 ```
 
