@@ -37,6 +37,9 @@
 		"db:reset": "docker exec lapince-api npx prisma migrate reset --force",
 		"db:generate": "docker exec lapince-api npx prisma generate"
 	},
+	"overrides": {
+		"sanitize-html": "2.17.5"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.15",
 		"@types/cors": "^2.8.19",
