@@ -4,7 +4,7 @@ import "dotenv/config";
 function requireEnv(name: string): string {
 	const value = process.env[name];
 	if (!value) {
-		throw new Error(`Missing required environnement variable : ${name}`);
+		throw new Error(`Missing required environment variable : ${name}`);
 	}
 	return value;
 }
@@ -18,7 +18,7 @@ export const envConfig = {
 	// "Fail fast" principle : better to crash at boot with a clear message
 	// than to fail unexpectedly in production.
 	jwtSecret: requireEnv("JWT_SECRET"),
-	// Setups for protections against attacs
+	// Setups for protections against attacks
 	jsonLimit: process.env.NODE_ENV === "production" ? "250kb" : "1mb",
 	rateLimitMax: process.env.NODE_ENV === "production" ? 200 : 1000,
 };

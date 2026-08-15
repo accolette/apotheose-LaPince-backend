@@ -17,19 +17,21 @@ import projectsRouter from "./routers/projects.router";
 
 // ============== SETTINGS ==================
 
-export const app = express(); // CORS: allows external clients (frontend, tools, other APIs) to call the API
+export const app = express();
 app.set("trust proxy", 1); // Required for Render/reverse proxy
+// CORS: allows external clients (frontend, tools, other APIs) to call the API
 app.use(cors({ origin: allowedOrigins }));
-// Standard headers reforced, hidden infos and XSS attack blocker
+// Helmet reinforces headers — skipped on Swagger routes,
+// otherwise its CSP blocks the documentation's inline scripts
 app.use((req, res, next) => {
 	if (req.path === "/" || req.path.startsWith("/-/")) return next();
 	helmet()(req, res, next);
 });
-// Parses JSON request bodies: required to read req.body in POST / PATCH / PUT requests. Using a limit for payload attac
+// Parses JSON request bodies: required to read req.body in POST / PATCH / PUT requests. Using a limit for payload attacks
 app.use(express.json({ limit: envConfig.jsonLimit }));
 // XSS sanitizer: protects against malicious scripts injected in user input
 app.use(xss());
-// Rate limiter to protect the API against abuse and excessive requests (basic DDoS / brute-force protection)
+// Rate limiter: basic protection against abuse and brute-force attempts
 app.use(apiRateLimiter);
 
 // ============== ROUTES ====================

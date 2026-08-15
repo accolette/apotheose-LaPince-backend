@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="zLAqMjz-7Bp0q1VkrKSU" name="MLD">
-        <mxGraphModel dx="1963" dy="1996" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1977" dy="1919" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -10,7 +10,7 @@
                 <mxCell id="26" value="&lt;b&gt;user&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;email&lt;br&gt;password" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
                     <mxGeometry x="710" y="20" width="220" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="27" value="&lt;b&gt;project&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;description&lt;br&gt;is_archived&lt;br&gt;user_id (FK not null)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
+                <mxCell id="27" value="&lt;b&gt;project&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;description&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;type&lt;br&gt;&lt;/font&gt;is_archived&lt;br&gt;user_id (FK not null)&lt;/div&gt;" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
                     <mxGeometry x="430" y="470" width="220" height="140" as="geometry"/>
                 </mxCell>
                 <mxCell id="28" value="&lt;b&gt;participant&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;user_id (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
@@ -25,7 +25,7 @@
                 <mxCell id="31" value="&lt;b&gt;alert&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;status&lt;br&gt;message&lt;br&gt;budget_id (FK not null)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
                     <mxGeometry x="1150" y="330" width="220" height="140" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="&lt;b&gt;operation&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;amount&lt;br&gt;date&lt;br&gt;payer_participant_id (FK not null)&lt;br&gt;user_id (FK not null)&lt;br&gt;category_id (FK not null)&lt;br&gt;project_id (FK not null)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
+                <mxCell id="32" value="&lt;b&gt;operation&lt;/b&gt;&lt;hr&gt;id (PK)&lt;br&gt;name&lt;br&gt;amount&lt;br&gt;date&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;is_amount_calculated&lt;br&gt;&lt;/font&gt;payer_participant_id (FK not null)&lt;br&gt;user_id (FK not null)&lt;br&gt;category_id (FK not null)&lt;br&gt;project_id (FK not null)&lt;/div&gt;" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;" parent="1" vertex="1">
                     <mxGeometry x="190" y="130" width="240" height="210" as="geometry"/>
                 </mxCell>
                 <mxCell id="33" value="&lt;b&gt;user_alert&lt;/b&gt;&lt;hr&gt;user_id (FK not null)&lt;br&gt;alert_id (FK not null)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;fillColor=#fff2cc;strokeColor=none;" parent="1" vertex="1">
@@ -34,7 +34,7 @@
                 <mxCell id="34" value="&lt;b&gt;project_participant&lt;/b&gt;&lt;hr&gt;project_id (FK not null)&lt;br&gt;participant_id (FK not null)" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;fillColor=#fff2cc;strokeColor=none;" parent="1" vertex="1">
                     <mxGeometry x="850" y="430" width="240" height="110" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="&lt;b&gt;operation_participant&lt;/b&gt;&lt;hr&gt;operation_id (FK not null)&lt;br&gt;participant_id (FK not null)&lt;br&gt;amount_distribution" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;fillColor=#fff2cc;strokeColor=none;" parent="1" vertex="1">
+                <mxCell id="35" value="&lt;b&gt;operation_participant&lt;/b&gt;&lt;hr&gt;operation_id (FK not null)&lt;br&gt;participant_id (FK not null)&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;is_repartition_amount_calculated&lt;br&gt;&lt;/font&gt;amount_distribution&lt;/div&gt;" style="shape=rectangle;whiteSpace=wrap;html=1;rounded=1;fillColor=#fff2cc;strokeColor=none;" parent="1" vertex="1">
                     <mxGeometry x="510" y="260" width="260" height="130" as="geometry"/>
                 </mxCell>
                 <mxCell id="36" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="27" target="26" edge="1">

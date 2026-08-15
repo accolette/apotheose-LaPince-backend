@@ -1,50 +1,70 @@
-@startuml
+@startuml add-project
+
+' Diagramme d'activité — Création d'un projet
+' Corrigé pour refléter le comportement réel du code (session de vérification)
+' Écarts corrigés par rapport à la version initiale (Sprint 0) :
+'  - budget et participants optionnels non représentés (existent pourtant dès la création)
+'  - statut d'erreur de validation réel : 422 (pas 400)
+'  - statut de succès confirmé : 201 (correct dans la version initiale)
+'  - une seule transaction Prisma englobant projet + budget + participants
 
 start
 
-:Utilisateur remplit le formulaire projet;
+:Utilisateur remplit le formulaire projet\n(nom, type, budget optionnel, participants optionnels);
 
-:Frontend React envoie POST /projects;
+:Frontend React envoie POST /api/projects;
 
 if (Utilisateur authentifié ?) then (Non)
-
-    :Retourner erreur 401;
-    :Afficher "Accès refusé";
-
-    stop
-
+  :Retourner erreur 401;
+  stop
 else (Oui)
-
-    :Valider les données;
-
-    if (Données valides ?) then (Non)
-
-        :Retourner erreur 400;
-        :Afficher "Formulaire invalide";
-
-        stop
-
-    else (Oui)
-
-        :Enregistrer projet en base;
-
-        if (Insertion réussie ?) then (Non)
-
-            :Retourner erreur 500;
-            :Afficher "Création impossible";
-
-            stop
-
-        else (Oui)
-
-            :Retourner succès 201;
-            :Afficher projet créé;
-
-        endif
-
-    endif
-
 endif
+
+:Validation Zod du body (createProjectSchema.parseAsync);
+if (Données valides ?) then (Non)
+  :Retourner erreur 422;
+  stop
+else (Oui)
+endif
+
+partition "Transaction Prisma unique" {
+  :INSERT project\n(name, type, description, appUserId);
+
+  if (Budget fourni ?) then (Oui)
+    :INSERT budget;
+    note right
+      Si alertEnabled = false,
+      limitCriteria est forcé à 100
+      (convention "alerte désactivée")
+    end note
+  else (Non)
+  endif
+
+  if (Participants fournis ?) then (Oui)
+    while (Pour chaque participant)
+      :INSERT participant\n(appUserId renseigné si isMe = true);
+      :INSERT project_participant;
+    endwhile
+  else (Non)
+  endif
+
+  :SELECT project complet\n(avec budget + participants);
+  note right
+    Si une étape échoue, toute
+    la transaction est annulée
+    (rollback automatique)
+  end note
+}
+
+if (Transaction réussie ?) then (Non)
+  :Retourner erreur 500;
+  stop
+else (Oui)
+  :Retourner succès 201 + projet créé;
+endif
+
+:Invalider le cache TanStack Query (projets);
+:Rediriger vers /project/:id;
 
 stop
 

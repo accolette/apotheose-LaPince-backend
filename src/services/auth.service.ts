@@ -150,7 +150,8 @@ export async function registerUser(
 		};
 	});
 
-	// Add : token creation for automatique redirect
+	// Token generated immediately at registration, enabling automatic
+	// login without a separate call to the login endpoint
 	const token = jwt.sign({ userId: result.user.id }, envConfig.jwtSecret, {
 		expiresIn: "7d",
 	});

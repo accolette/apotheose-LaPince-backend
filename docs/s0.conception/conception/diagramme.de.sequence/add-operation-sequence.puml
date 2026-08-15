@@ -47,7 +47,7 @@ else Accès autorisé
     DB --> API : transaction OK
     deactivate DB
 
-    API --> Front : 201 Opération créée
+    API --> Front : 200 Opération créée
     deactivate API
 
     Front -> Front : Invalide le cache TanStack Query\n(opérations, budgets, balance)

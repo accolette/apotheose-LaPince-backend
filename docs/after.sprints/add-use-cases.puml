@@ -1,0 +1,63 @@
+@startuml add-use-cases
+
+' Diagramme de cas d'utilisation — La Pince
+' Acteur unique : Utilisateur authentifié
+' 14 cas d'usage couverts par le MVP
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #A1A1AA
+  FontColor #09090B
+}
+
+actor "Utilisateur\nauthentifié" as User
+
+rectangle "La Pince — application" {
+
+  package "Authentification" {
+    usecase "UC-01\nS'inscrire\n(+ projet démo auto-généré)" as UC01
+    usecase "UC-02\nSe connecter" as UC02
+    usecase "UC-03\nSe déconnecter" as UC03
+  }
+
+  package "Gestion des projets" {
+    usecase "UC-04\nVoir ses projets" as UC04
+    usecase "UC-05\nCréer un projet" as UC05
+    usecase "UC-06\nGérer le budget" as UC06
+    usecase "UC-07\nGérer les participants" as UC07
+    usecase "UC-08\nVoir le détail d'un projet" as UC08
+    usecase "UC-14\nArchiver un projet" as UC14
+  }
+
+  package "Dépenses et remboursements" {
+    usecase "UC-09\nSaisir une dépense" as UC09
+    usecase "UC-10\nRépartir une dépense\npar participant" as UC10
+    usecase "UC-11\nModifier / supprimer\nune dépense" as UC11
+    usecase "UC-12\nVoir les soldes\net remboursements" as UC12
+  }
+
+  package "Alertes" {
+    usecase "UC-13\nConsulter et gérer\nles alertes" as UC13
+  }
+
+  UC09 ..> UC10 : <<include>>
+}
+
+User --> UC01
+User --> UC02
+User --> UC03
+User --> UC04
+User --> UC05
+User --> UC06
+User --> UC07
+User --> UC08
+User --> UC09
+User --> UC11
+User --> UC12
+User --> UC13
+User --> UC14
+
+@enduml

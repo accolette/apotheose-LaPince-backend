@@ -20,7 +20,7 @@ else Utilisateur authentifié
     API -> API : Zod parse() — validation du body
 
     alt Données invalides
-        API --> Front : 400 Données invalides
+        API --> Front : 422 Données invalides
         Front --> Utilisateur : Erreurs affichées dans le formulaire
     else Données valides
 

@@ -3,7 +3,7 @@ import { envConfig } from "../config/env.config";
 import { TooManyRequestsError } from "./errors";
 
 export const apiRateLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes before re initalisation of the limiter
+	windowMs: 15 * 60 * 1000, // 15 minutes before reinitialization of the limiter
 	max: envConfig.rateLimitMax,
 
 	standardHeaders: true,

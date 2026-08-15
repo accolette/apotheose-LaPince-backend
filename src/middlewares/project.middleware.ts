@@ -18,7 +18,7 @@ export function validateProjectParticipantsUpdate(
 	_res: Response,
 	next: NextFunction,
 ) {
-	// Parse and overwrite req.body so Zod transforms and stripping reach the controller
+	// Same principle: ensure the controller receives the parsed, cleaned payload
 	req.body = updateProjectParticipantsSchema.parse(req.body);
 	next();
 }

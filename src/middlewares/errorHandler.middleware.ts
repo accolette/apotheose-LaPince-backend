@@ -11,7 +11,7 @@ export function errorHandler(
 ) {
 	const isDev = process.env.NODE_ENV === "development";
 
-	// If an error from zod validation happen :
+	// If an error from zod validation happens :
 	if (error instanceof z.ZodError) {
 		if (isDev) console.info("ZodError", error);
 		return res.status(422).json({
@@ -20,7 +20,7 @@ export function errorHandler(
 		});
 	}
 
-	// Controlled errors: those who voluntarily throw
+	// Controlled errors: thrown voluntarily by our own code
 	if (error instanceof HttpError) {
 		return res.status(error.status).json({
 			status: error.status,

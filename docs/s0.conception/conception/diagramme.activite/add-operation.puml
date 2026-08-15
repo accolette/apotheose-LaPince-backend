@@ -1,66 +1,75 @@
-@startuml
+@startuml add-operation
+
+' Diagramme d'activité — Saisie d'une dépense
+' Corrigé pour refléter le comportement réel du code (session de vérification)
+' Écarts corrigés par rapport à la version initiale (Sprint 0) :
+'  - la répartition est calculée côté FRONT, pas côté back
+'  - route réelle imbriquée : POST /api/projects/:id/operations
+'  - une seule transaction Prisma (pas deux INSERT indépendants)
+'  - ajout de la vérification d'ownership (assertProjectOwner)
+'  - ajout de la validation Zod en amont (422, pas 400)
+'  - ajout de la réévaluation d'alerte (checkAndCreateAlert)
+'  - statut de succès réel : 200 (pas 201)
 
 start
 
-:Utilisateur saisit une dépense;
+partition "Front (React)" {
+  :Utilisateur saisit une dépense\n(nom, montant, catégorie, payeur, participants);
+  if (Répartition automatique ?) then (Oui)
+    :Calculer les parts à égalité\n(splitAmountInCents, gestion du reste d'arrondi);
+  else (Non)
+    :Utiliser les montants saisis manuellement\npar participant;
+  endif
+  :Envoyer POST /api/projects/:id/operations\n(repartitionAmount déjà calculé, envoyé tel quel);
+}
 
-:Frontend React envoie POST /operations;
-
-:Vérifier existence du projet;
-
-if (Projet trouvé ?) then (Non)
-
-    :Retourner erreur 404;
-    :Afficher "Projet introuvable";
-
+partition "Back (Express)" {
+  :authMiddleware — vérifier le token JWT;
+  if (Token valide ?) then (Non)
+    :Retourner erreur 401;
     stop
+  else (Oui)
+  endif
 
-else (Oui)
+  :validateOperation — validation Zod du payload;
+  if (Payload valide ?) then (Non)
+    :Retourner erreur 422;
+    stop
+  else (Oui)
+  endif
 
-    :Vérifier montant;
+  :assertProjectOwner(projectId, userId);
+  if (Projet trouvé ?) then (Non)
+    :Retourner erreur 404;
+    stop
+  else (Oui)
+  endif
+  if (Utilisateur propriétaire ?) then (Non)
+    :Retourner erreur 403;
+    stop
+  else (Oui)
+  endif
 
-    if (Montant valide ?) then (Non)
+  partition "Transaction Prisma unique" {
+    :INSERT operation;
+    :INSERT operationParticipants\n(createMany — valeurs reçues, aucun recalcul);
+    :checkAndCreateAlert\n(réévaluation du seuil budgétaire);
+    note right
+      Si une étape échoue, toute
+      la transaction est annulée
+      (rollback automatique)
+    end note
+  }
 
-        :Retourner erreur 400;
-        :Afficher "Montant invalide";
+  if (Transaction réussie ?) then (Non)
+    :Retourner erreur 500;
+    stop
+  else (Oui)
+    :Retourner succès 200 + opération créée;
+  endif
+}
 
-        stop
-
-    else (Oui)
-
-        :Récupérer participants du projet;
-
-        :Calculer répartitions;
-
-        :INSERT opération;
-
-        if (Insertion opération réussie ?) then (Non)
-
-            :Retourner erreur 500;
-            :Afficher "Création impossible";
-
-            stop
-
-        else (Oui)
-
-            :INSERT répartitions;
-
-            if (Insertion répartitions réussie ?) then (Non)
-
-                :Retourner erreur 500;
-                :Afficher "Répartition impossible";
-
-                stop
-
-            else (Oui)
-
-                :Retourner succès 201;
-                :Afficher dépense créée;
-
-            endif
-        endif
-    endif
-endif
+:Afficher la dépense créée dans la liste;
 
 stop
 
